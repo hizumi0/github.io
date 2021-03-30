@@ -1,35 +1,42 @@
-name: Build and Deploy
-on: [push]
+n# ワークフローの名前
+name: Release GitHub Page
+
+# 起動のタイミング
+# 今回はmasterブランチへのpush
+on:
+  push:
+    branches:
+      - test3
+
+# ジョブの定義
 jobs:
-  build-and-deploy:
+  build:
+    # 実行するインスタンス
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./src
 
+    # nodeのバージョン一覧
+    strategy:
+      matrix:
+        node-version: ['12.x']
+
+    # 各ステップの実行
     steps:
-      - name: Checkout 
-        uses: actions/checkout@v2 # If you're using actions/checkout@v2 you must set persist-credentials to false in most cases for the deployment to work correctly.
-        with:
-          persist-credentials: false
 
-      - name: Cache  
-        uses: actions/cache@v2
-        with:
-          path: ${{ github.workspace }}/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}
+    # チェックアウト
+    - uses: actions/checkout@v1
 
-      - name: Install and Build 🔧 # This example project is built using npm and outputs the result to the 'build' folder. Replace with the commands required to build your project, or remove this step entirely if your site is pre-built.
-        uses: actions/setup-node@v1
-      - run: npm install
-      - run: npm run build
-        env:
-            CI: true
+    # 使用するnodeのバージョンを指定
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v1
+      with:
+        node-version: ${{ matrix.node-version }}
 
-      - name: Deploy 
-        uses: JamesIves/github-pages-deploy-action@3.6.2
-        with:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          BRANCH: test3 # The branch the action should deploy to.
-          FOLDER: src/out # The folder the action should deploy.
-          CLEAN: true # Automatically remove deleted files from the deploy branch
+    # パッケージのインストールとアプリのビルド
+    - name: install and build
+      run: |
+        npm ci
+        npm run build
+      env:
+        CI: true
+
+    
